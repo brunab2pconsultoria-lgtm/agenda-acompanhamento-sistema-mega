@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Transição Access → MEGA · Arpol | Agenda Calendário</title>
+  <link rel="icon" type="image/png" href="arpol_mark_color.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css?v=20261011_calendar">
+</head>
+<body>
+
+  <div class="calendar-app-container">
+    
+    <!-- CABEÇALHO OBJETIVO -->
+    <header class="cal-header">
+      <div class="cal-header-top">
+        <div class="cal-brand">
+          <img src="arpol_logo_completo_cor.png" alt="Arpol" class="cal-logo" onerror="this.src='arpol_mark_color.png';">
+          <span class="cal-tag">Transição Access → MEGA · Arpol</span>
+        </div>
+        <div class="cal-user-box">
+          <div id="box-gestor-logado" style="display: none; align-items: center; gap: 8px;">
+            <span style="font-size: 0.8rem; font-weight: 700; color: #2A3890; background: #eef1fa; padding: 4px 10px; border-radius: 6px;">👑 Visão Gestor (Bruna)</span>
+            <span id="badge-pendentes-header" class="badge-pendentes-contador" style="display:none;" title="Solicitações pendentes de aprovação">0 pendente(s)</span>
+            <button class="btn-sair-admin" onclick="sairModoGestor()" title="Voltar para a visão normal de colaborador">Sair</button>
+          </div>
+          <button id="btn-acesso-gestor" class="btn-acesso-restrito" onclick="abrirModalSenhaGestor()" title="Acesso Administrativo">
+            🔒 Área do Gestor
+          </button>
+          <input type="hidden" id="campo-usuario-global" value="">
+        </div>
+      </div>
+
+      <h1 class="cal-title">Agenda de acompanhamento com o consultor Senior</h1>
+      <p class="cal-subtitle">
+        Escolha um horário livre de <strong>30 minutos</strong>, informe seu departamento e o assunto. Encontros remotos para tirar dúvidas durante o uso em paralelo.
+      </p>
+
+      <!-- BARRA DE NAVEGAÇÃO DO MÊS & LEGENDA -->
+      <div class="cal-controls-bar">
+        <!-- Navegação de Mês -->
+        <div class="cal-month-nav">
+          <button class="btn-nav" onclick="mudarMes(-1)">◀ Anterior</button>
+          <span class="label-mes-ano" id="rotulo-mes-ano">Outubro 2026</span>
+          <button class="btn-nav" onclick="mudarMes(1)">Próximo ▶</button>
+        </div>
+
+        <!-- Legenda -->
+        <div class="cal-legend">
+          <span class="leg-item"><span class="dot-livre"></span> Livre</span>
+          <span class="leg-item"><span class="dot-pendente"></span> Aguardando Confirmação</span>
+          <span class="leg-item"><span class="dot-reservado"></span> Reservado</span>
+        </div>
+
+        <!-- Filtro Rápido -->
+        <div class="cal-filter-toggle">
+          <label for="chk-so-livres">
+            <input type="checkbox" id="chk-so-livres">
+            <span>Mostrar só dias com horário livre</span>
+          </label>
+        </div>
+      </div>
+    </header>
+
+    <!-- ÁREA PRINCIPAL: GRID CALENDÁRIO + PAINEL DO DIA SELECIONADO -->
+    <main class="cal-main-layout">
+      
+      <!-- LADO ESQUERDO: GRADE MENSAL DE DIAS -->
+      <section class="cal-month-grid-wrapper">
+        <div class="cal-weekdays-header">
+          <div>Dom</div>
+          <div>Seg</div>
+          <div>Ter</div>
+          <div>Qua</div>
+          <div>Qui</div>
+          <div>Sex</div>
+          <div>Sáb</div>
+        </div>
+        <div class="cal-days-grid" id="grid-dias-mes">
+          <!-- Renderizado via app.js -->
+        </div>
+      </section>
+
+      <!-- LADO DIREITO: PAINEL DOS HORÁRIOS DO DIA ESCOLHIDO -->
+      <aside class="cal-day-detail-panel">
+        <div class="day-detail-header">
+          <h3 id="painel-dia-titulo">Selecione um dia</h3>
+          <p id="painel-dia-meta" class="painel-meta">Clique em um dia no calendário para ver e agendar horários</p>
+        </div>
+
+        <div class="day-slots-list" id="lista-slots-dia">
+          <!-- Slots de 30min do dia selecionado -->
+        </div>
+      </aside>
+
+    </main>
+
+  </div>
+
+  <!-- MODAL RÁPIDO DE AGENDAMENTO -->
+  <div id="modal-agendamento" class="modal-overlay-cal">
+    <div class="modal-box-cal">
+      <div class="modal-header-cal">
+        <h3>Reservar Horário</h3>
+        <button class="btn-fechar" onclick="fecharModal()">✕</button>
+      </div>
+
+      <form id="form-agendar" onsubmit="salvarAgendamento(event)">
+        <div class="modal-body-cal">
+          <div id="resumo-slot-modal" class="slot-summary-box"></div>
+
+          <div class="form-group-cal">
+            <label for="input-nome">Seu Nome *</label>
+            <input type="text" id="input-nome" placeholder="Ex: Bruna Carvalho" required>
+          </div>
+
+          <div class="form-group-cal">
+            <label for="input-dept">Departamento *</label>
+            <input type="text" id="input-dept" placeholder="Ex: Financeiro, Obras, Contratos, etc." required>
+          </div>
+
+          <div class="form-group-cal">
+            <label for="input-assunto">Assunto / Dúvida *</label>
+            <textarea id="input-assunto" rows="2" placeholder="Qual processo da transição deseja tirar dúvidas?" required></textarea>
+          </div>
+        </div>
+
+        <div class="modal-footer-cal">
+          <button type="button" class="btn-cancelar" onclick="fecharModal()">Cancelar</button>
+          <button type="submit" class="btn-confirmar">Solicitar Horário</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL DE SUCESSO E NOTIFICAÇÃO BRUNA (WHATSAPP E E-MAIL) -->
+  <div id="modal-sucesso-solicitacao" class="modal-overlay-cal">
+    <div class="modal-box-cal" style="max-width: 500px;">
+      <div class="modal-header-cal">
+        <h3 style="color: #2A3890;">✅ Solicitação Enviada!</h3>
+        <button class="btn-fechar" onclick="fecharModal()">✕</button>
+      </div>
+      <div class="modal-body-cal">
+        <div style="background: #fffbeb; border: 1px solid #fde68a; border-radius: 8px; padding: 12px; margin-bottom: 14px; font-size: 0.85rem; color: #92400e; line-height: 1.5;">
+          <strong>Horário bloqueado provisoriamente:</strong> Sua solicitação foi registrada no sistema e aguarda a confirmação da gestora <strong>Bruna</strong>.
+        </div>
+        <div id="resumo-sucesso-notif" style="font-size: 0.85rem; color: #1e293b; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px; margin-bottom: 16px;"></div>
+        
+        <p style="font-size: 0.82rem; font-weight: 700; color: #475569; margin-bottom: 10px;">
+          Notifique a Bruna com 1 clique para agilizar a aprovação:
+        </p>
+
+        <div style="display: flex; flex-direction: column; gap: 10px;">
+          <a id="btn-link-whatsapp" href="#" target="_blank" style="display: flex; align-items: center; justify-content: center; gap: 8px; background: #25D366; color: #ffffff; text-decoration: none; padding: 10px 16px; border-radius: 8px; font-weight: 700; font-size: 0.86rem; box-shadow: 0 2px 8px rgba(37,211,102,0.3);">
+            <span>💬 Avisar Bruna via WhatsApp</span>
+          </a>
+
+          <a id="btn-link-email" href="#" style="display: flex; align-items: center; justify-content: center; gap: 8px; background: #2A3890; color: #ffffff; text-decoration: none; padding: 10px 16px; border-radius: 8px; font-weight: 700; font-size: 0.86rem; box-shadow: 0 2px 8px rgba(42,56,144,0.25);">
+            <span>✉️ Avisar Bruna via E-mail</span>
+          </a>
+        </div>
+      </div>
+      <div class="modal-footer-cal">
+        <button type="button" class="btn-confirmar" style="width: 100%;" onclick="fecharModal()">Concluir</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL DE CANCELAMENTO -->
+  <div id="modal-cancelar" class="modal-overlay-cal">
+    <div class="modal-box-cal">
+      <div class="modal-header-cal">
+        <h3>Cancelar Reserva</h3>
+        <button class="btn-fechar" onclick="fecharModal()">✕</button>
+      </div>
+      <div class="modal-body-cal">
+        <p id="texto-cancelar" style="color: #cbd5e1; font-size: 0.9rem; line-height: 1.5;"></p>
+      </div>
+      <div class="modal-footer-cal">
+        <button type="button" class="btn-cancelar" onclick="fecharModal()">Voltar</button>
+        <button type="button" class="btn-danger" onclick="confirmarCancelamento()">Sim, Liberar Horário</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL DE SENHA DO GESTOR -->
+  <div id="modal-senha-gestor" class="modal-overlay-cal">
+    <div class="modal-box-cal" style="max-width: 400px;">
+      <div class="modal-header-cal">
+        <h3>Acesso Restrito do Gestor</h3>
+        <button class="btn-fechar" onclick="fecharModal()">✕</button>
+      </div>
+      <form id="form-login-gestor" onsubmit="autenticarGestor(event)">
+        <div class="modal-body-cal">
+          <p style="font-size: 0.82rem; color: #64748b; margin-bottom: 14px;">
+            Informe a senha de gestão para visualizar a alocação completa de consultores e gerenciar as reservas.
+          </p>
+          <div class="form-group-cal">
+            <label for="input-senha-gestor">Senha de Acesso *</label>
+            <input type="password" id="input-senha-gestor" placeholder="••••••••" required autofocus>
+            <div id="erro-senha-gestor" style="display: none; color: #ef4444; font-size: 0.78rem; font-weight: 700; margin-top: 6px;">
+              ⚠️ Senha incorreta.
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer-cal">
+          <button type="button" class="btn-cancelar" onclick="fecharModal()">Cancelar</button>
+          <button type="submit" class="btn-confirmar">Acessar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="schedule_data.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
